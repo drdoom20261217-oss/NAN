@@ -1,0 +1,39 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.Networking;
+using TMPro;
+
+public class IoTDataDisplay : MonoBehaviour
+{
+    public TextMeshPro temperatureText;
+
+    void Start()
+    {
+        InvokeRepeating("GetSensorData", 1f, 1f);
+    }
+
+    void GetSensorData()
+    {
+        StartCoroutine(GetRequest(
+            "https://example.com/api/sensor/temperature"));
+    }
+
+    IEnumerator GetRequest(string uri)
+    {
+        UnityWebRequest request = UnityWebRequest.Get(uri);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            float temperature =
+                float.Parse(request.downloadHandler.text);
+
+            temperatureText.text = "Temp: " + temperature + "°C";
+
+            if (temperature > 80)
+            {
+                temperatureText.color = Color.red;
+            }
+        }
+    }
+}

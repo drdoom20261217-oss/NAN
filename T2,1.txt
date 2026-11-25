@@ -1,0 +1,53 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include "DHT.h"
+
+#define DHTPIN 15
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+
+String apiKey = "YOUR_WRITE_API_KEY";
+String server = "https://api.thingspeak.com/update";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  dht.begin();
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting...");
+  }
+
+  Serial.println("WiFi Connected!");
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+
+    float hum = dht.readHumidity();
+    float temp = dht.readTemperature();
+
+    String url = server + "?api_key=" + apiKey +
+                 "&field1=" + String(temp) +
+                 "&field2=" + String(hum);
+
+    http.begin(url);
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+      Serial.println("Data sent to ThingSpeak");
+    } else {
+      Serial.println("Error sending data");
+    }
+
+    http.end();
+  }
+
+  delay(20000);
+}
